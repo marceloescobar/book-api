@@ -1,5 +1,6 @@
 package com.mescobar.bookapi.controller;
 
+import com.mescobar.bookapi.config.CachingConfig;
 import com.mescobar.bookapi.controller.dto.BookResponse;
 import com.mescobar.bookapi.controller.dto.CreateBookRequest;
 import com.mescobar.bookapi.controller.dto.UpdateBookRequest;
@@ -8,6 +9,9 @@ import com.mescobar.bookapi.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,6 +47,7 @@ public class BookController {
             summary = "Get a book",
             description = "This endpoint is used to get a specific book ..."
     )
+    @Cacheable(cacheNames = CachingConfig.BOOKS, key = "#id")
     @GetMapping("/{id}")
     public Mono<BookResponse> getBook(@PathVariable String id) {
         return bookService.validateAndGetBookById(id).map(bookMapper::toBookResponse);
@@ -52,6 +57,7 @@ public class BookController {
             summary = "Create a book",
             description = "This endpoint is used to create a specific book ..."
     )
+    @CachePut(cacheNames = CachingConfig.BOOKS, key = "#result.id")
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public Mono<BookResponse> createBook(@Valid @RequestBody CreateBookRequest createBookRequest) {
@@ -62,6 +68,7 @@ public class BookController {
             summary = "Update a book",
             description = "This endpoint is used to update a specific book ..."
     )
+    @CachePut(cacheNames = CachingConfig.BOOKS, key = "#id")
     @PatchMapping("/{id}")
     public Mono<BookResponse> updateBook(@PathVariable String id,
             @RequestBody UpdateBookRequest updateBookRequest) {
@@ -77,6 +84,7 @@ public class BookController {
             summary = "Delete a book",
             description = "This endpoint is used to delete a specific book ..."
     )
+    @CacheEvict(cacheNames = CachingConfig.BOOKS, key = "#id")
     @DeleteMapping("/{id}")
     public Mono<BookResponse> deleteBook(@PathVariable String id) {
         return bookService.validateAndGetBookById(id)
